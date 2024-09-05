@@ -1,16 +1,28 @@
-# Spatial Analysis with R: Exploring British Columbia's Educational Landscape
+---
+title: "Spatial Analysis with R"
+format: html
+editor: visual
+---
 
-Welcome to our workshop on spatial analysis using R and the SF package! Today, we'll embark on a journey through British Columbia's educational landscape. As urban planners and education policy researchers, we've been tasked with analyzing the distribution and accessibility of schools across the province. This analysis will help inform decisions about resource allocation, new school placements, and educational equity.
+# Exploring British Columbia's Educational Landscape
+
+Welcome to our workshop on spatial analysis using R and the SF package!
+Today, we'll embark on a journey through British Columbia's educational
+landscape. As urban planners and education policy researchers, we've
+been tasked with analyzing the distribution and accessibility of schools
+across the province. This analysis will help inform decisions about
+resource allocation, new school placements, and educational equity.
 
 Let's begin by loading our essential tools:
 
 ```{r}
 #| message: false
+
+library(sf)         # For handling spatial data
 library(dplyr)      # For data manipulation
 library(ggplot2)    # For creating beautiful visualizations
 # library(units)      # For handling measurement units
 library(lwgeom)     # For sf calculations, such as area
-library(sf)         # For handling spatial data
 library(units)      # For handling measurement units
 ```
 
@@ -21,10 +33,11 @@ sf_use_s2(FALSE)
 theme_set(theme_minimal()) # ggplot theme
 ```
 
-
 ## Setting the Stage: Loading Our Data
 
-Our first step is to load the necessary datasets. In a real-world scenario, you might receive these files from various government departments or open data portals.
+Our first step is to load the necessary datasets. In a real-world
+scenario, you might receive these files from various government
+departments or open data portals.
 
 ```{r}
 # Load world map for context
@@ -40,14 +53,21 @@ can_districts <- read_sf("data/lfed000a21a_e/lfed000a21a_e.shp")
 greatervan_schools <- read_sf(file.path("data", "k-12", "GSR_SCHOOLS_K_TO_12_SVW", "SCHOOL_K12_point.shp"))
 ```
 
-Here, we're using `read_sf()` to load our spatial data. This function is part of the sf package and reads various spatial file formats, converting them into sf objects that we can easily manipulate in R.
-
+Here, we're using `read_sf()` to load our spatial data. This function is
+part of the sf package and reads various spatial file formats,
+converting them into sf objects that we can easily manipulate in R.
 
 ## Understanding and Working with Projections
 
-Before we dive deep into our analysis of British Columbia's educational landscape, let's take a moment to explore the concept of map projections. Projections are methods of representing the Earth's three-dimensional surface on a two-dimensional plane. Different projections have different properties and are suitable for different purposes.
+Before we dive deep into our analysis of British Columbia's educational
+landscape, let's take a moment to explore the concept of map
+projections. Projections are methods of representing the Earth's
+three-dimensional surface on a two-dimensional plane. Different
+projections have different properties and are suitable for different
+purposes.
 
-The sf package makes it easy to work with and switch between different projections. Let's demonstrate this using our world map data:
+The sf package makes it easy to work with and switch between different
+projections. Let's demonstrate this using our world map data:
 
 ```{r}
 # Check the current projection of our world map
@@ -59,7 +79,8 @@ ggplot(world_map) +
   ggtitle("World Map in Original Projection")
 ```
 
-This is how our world map looks in its original projection. Now, let's experiment with some different projections:
+This is how our world map looks in its original projection. Now, let's
+experiment with some different projections:
 
 ```{r}
 # Removing Antarctica
@@ -88,11 +109,15 @@ ggplot(world_no_antarctica) +
 
 As you can see, each projection represents the world differently:
 
-1. The Robinson projection is a compromise projection that reduces distortion of all map properties.
-2. The Mercator projection preserves angles but significantly distorts area, especially near the poles.
-3. The Mollweide projection preserves area but distorts shape, especially near the edges.
+1.  The Robinson projection is a compromise projection that reduces
+    distortion of all map properties.
+2.  The Mercator projection preserves angles but significantly distorts
+    area, especially near the poles.
+3.  The Mollweide projection preserves area but distorts shape,
+    especially near the edges.
 
-Now, let's focus on Canada and demonstrate how to transform our data to a projection that's more suitable for our area of interest:
+Now, let's focus on Canada and demonstrate how to transform our data to
+a projection that's more suitable for our area of interest:
 
 ```{r}
 # Filter for Canada
@@ -114,9 +139,12 @@ ggplot(canada_lambert) +
   ggtitle("Canada in Lambert Conformal Conic Projection")
 ```
 
-The Lambert Conformal Conic projection is often used for Canada because it provides a good balance of area and shape accuracy for this region.
+The Lambert Conformal Conic projection is often used for Canada because
+it provides a good balance of area and shape accuracy for this region.
 
-When working with spatial data, it's crucial to ensure that all your datasets are in the same projection. Let's demonstrate how to check and align projections:
+When working with spatial data, it's crucial to ensure that all your
+datasets are in the same projection. Let's demonstrate how to check and
+align projections:
 
 ```{r}
 # Check CRS of our datasets
@@ -140,13 +168,21 @@ ggplot(can_provinces) +
 st_crs(can_provinces) == st_crs(greatervan_schools)
 ```
 
-In this example, we checked the Coordinate Reference System (CRS) of our datasets, transformed one to match the other, and then verified that they now have the same CRS. This step is crucial before performing any spatial operations or analyses involving multiple datasets.
+In this example, we checked the Coordinate Reference System (CRS) of our
+datasets, transformed one to match the other, and then verified that
+they now have the same CRS. This step is crucial before performing any
+spatial operations or analyses involving multiple datasets.
 
-Understanding and correctly handling projections is fundamental in spatial analysis. It affects everything from how your maps look to the accuracy of distance and area calculations. As we proceed with our analysis of the Greater Vancouver Area's schools, we'll ensure our data is consistently projected for accurate results.
+Understanding and correctly handling projections is fundamental in
+spatial analysis. It affects everything from how your maps look to the
+accuracy of distance and area calculations. As we proceed with our
+analysis of the Greater Vancouver Area's schools, we'll ensure our data
+is consistently projected for accurate results.
 
 ## British Columbia
 
-Let's extract the BC data and ensure all our datasets are using the same coordinate reference system (CRS).
+Let's extract the BC data and ensure all our datasets are using the same
+coordinate reference system (CRS).
 
 ```{r}
 # Extract British Columbia from Canadian provinces
@@ -169,7 +205,11 @@ ggplot(bc_districts) +
   ggtitle("British Columbia Districts")
 ```
 
-In this step, we're using `filter()` to select British Columbia from our provinces dataset. Then, we use `st_transform()` to ensure all our data is in the same CRS. This is crucial for accurate spatial analysis. Finally, we use `st_intersection()` to extract only the districts within BC.
+In this step, we're using `filter()` to select British Columbia from our
+provinces dataset. Then, we use `st_transform()` to ensure all our data
+is in the same CRS. This is crucial for accurate spatial analysis.
+Finally, we use `st_intersection()` to extract only the districts within
+BC.
 
 Let's visualize our data to get a sense of what we're working with:
 
@@ -180,16 +220,20 @@ ggplot() +
   ggtitle("Schools in Greater Vancouver Area")
 ```
 
-This map gives us an overview of BC's geography, its districts, and the distribution of schools in the Greater Vancouver area.
+This map gives us an overview of BC's geography, its districts, and the
+distribution of schools in the Greater Vancouver area.
 
-
-Let's zoom in a little using the `st_bbox()` function. 
+Let's zoom in a little using the `st_bbox()` function.
 
 ```{r}
 # Create a boundary around the locations of schools with a 5km buffer
 (bbox_schools <- st_bbox(greatervan_schools))
 (bbox_schools <- st_as_sfc(bbox_schools))
 
+```
+
+
+```{r}
 ggplot() +
   geom_sf(data = bbox_schools, fill = NA, color = "darkgrey") +
   geom_sf(data = greatervan_schools, color = "red", size = 1) +
@@ -201,7 +245,10 @@ ggplot() +
   geom_sf(data = bbox_schools, fill = NA, color = "darkgrey") +
   geom_sf(data = greatervan_schools, color = "red", size = 0.5) +
   ggtitle("Schools of Greater Vancouver")
+```
 
+
+```{r}
 bbox_schools <- greatervan_schools %>% 
     st_union() %>% 
     st_convex_hull()
@@ -210,7 +257,10 @@ ggplot() +
   geom_sf(data = bbox_schools, fill = NA, color = "darkgray") +
   geom_sf(data = greatervan_schools, color = "red", size = 1) +
   ggtitle("Schools of Greater Vancouver")
+```
 
+
+```{r}
 bbox_schools <- bbox_schools %>% 
   st_buffer(dist = 5e3) %>% 
   st_bbox() %>% 
@@ -220,7 +270,10 @@ ggplot() +
   geom_sf(data = bbox_schools, fill = NA, color = "darkgray") +
   geom_sf(data = greatervan_schools, color = "red", size = 1) +
   ggtitle("Schools of Greater Vancouver")
+```
 
+
+```{r}
 # Extract the intersection of the BC districts and the boundary of GVA schools
 vancouver_districts <- st_intersection(bc_districts, bbox_schools)
 
@@ -231,10 +284,10 @@ ggplot() +
   ggtitle("Schools of Greater Vancouver")
 ```
 
-
 ## Analyzing School Distribution
 
-Now that we have our data prepared, let's start our analysis by looking at the distribution of schools across districts.
+Now that we have our data prepared, let's start our analysis by looking
+at the distribution of schools across districts.
 
 ```{r}
 # Count schools per district
@@ -270,9 +323,14 @@ ggplot() +
   ggtitle("Number of Schools per District in BC")
 ```
 
-Here, we're using `st_join()` to perform a spatial join between districts and schools. This assigns each school to a district based on its location. Then, we use `group_by()` and `summarise()` to count the number of schools in each district. The resulting map gives us a quick visual understanding of where schools are concentrated.
+Here, we're using `st_join()` to perform a spatial join between
+districts and schools. This assigns each school to a district based on
+its location. Then, we use `group_by()` and `summarise()` to count the
+number of schools in each district. The resulting map gives us a quick
+visual understanding of where schools are concentrated.
 
 Let's get our bearings with a few city names
+
 ```{r}
 # Create a data frame for the major cities in the GVA
 major_cities <- data.frame(
@@ -294,12 +352,15 @@ ggplot() +
   ggtitle("Number of Schools per District in Vancouver Area") + 
   geom_sf_label(data = major_cities,
                 aes(label = city), nudge_x = 5000, nudge_y = 2500)
-```
 
+```
 
 ## Analyzing School Accessibility
 
-An important aspect of educational equity is school accessibility. Let's analyze how much of BC's population is within a reasonable distance of a school. We'll create 5km buffers around schools to represent areas within easy reach.
+An important aspect of educational equity is school accessibility. Let's
+analyze how much of BC's population is within a reasonable distance of a
+school. We'll create 5km buffers around schools to represent areas
+within easy reach.
 
 ```{r}
 # Create 5km buffers around schools
@@ -329,11 +390,16 @@ sprintf("%s%% of GVA is within 5km of a school",
         round(accessibility_percentage, 2))
 ```
 
-In this analysis, we use `st_buffer()` to create 5km zones around each school. We then use `st_union()` to combine these into a single area, and `st_intersection()` to find where this area overlaps with BC. This gives us an idea of how much of BC's land area is within 5km of a school.
+In this analysis, we use `st_buffer()` to create 5km zones around each
+school. We then use `st_union()` to combine these into a single area,
+and `st_intersection()` to find where this area overlaps with BC. This
+gives us an idea of how much of BC's land area is within 5km of a
+school.
 
 ## Analyzing School Catchment Areas
 
-To understand how students might be distributed among schools, we can create theoretical catchment areas using Voronoi polygons.
+To understand how students might be distributed among schools, we can
+create theoretical catchment areas using Voronoi polygons.
 
 ```{r}
 # Create Voronoi polygons
@@ -358,11 +424,16 @@ ggplot() +
   ggtitle("Theoretical School Catchment Areas in GVA")
 ```
 
-Here, we use `st_voronoi()` to create Voronoi polygons around our schools. These polygons represent areas that are closer to one school than to any other. We then use `st_intersection()` to clip these polygons to the GVA boundary.
+Here, we use `st_voronoi()` to create Voronoi polygons around our
+schools. These polygons represent areas that are closer to one school
+than to any other. We then use `st_intersection()` to clip these
+polygons to the GVA boundary.
 
 ## Finding Nearest Schools
 
-Finally, let's look at the distribution of schools by finding the five nearest schools for each school. This can help identify areas where schools are clustered or isolated.
+Finally, let's look at the distribution of schools by finding the five
+nearest schools for each school. This can help identify areas where
+schools are clustered or isolated.
 
 ```{r}
 # Calculate distances between all schools
@@ -386,14 +457,19 @@ nearest_5 <- nearest_5 %>%
 head(nearest_5)
 ```
 
-In this final analysis, we use `st_distance()` to calculate the distances between all schools. We then use this to find the five nearest neighbors for each school. This information could be useful for planning shared resources or understanding the density of schools in different areas.
+In this final analysis, we use `st_distance()` to calculate the
+distances between all schools. We then use this to find the five nearest
+neighbors for each school. This information could be useful for planning
+shared resources or understanding the density of schools in different
+areas.
 
 ### BONUS: Interative Maps
 
 SF integrates well with other R packages and ecosystems:
 
-- Tidyverse: As we've seen, SF works seamlessly with dplyr and ggplot2.
-- Leaflet: For interactive web maps:
+-   Tidyverse: As we've seen, SF works seamlessly with dplyr and
+    ggplot2.
+-   Leaflet: For interactive web maps:
 
 ```{r}
 #| message: false
@@ -420,17 +496,27 @@ leaflet() %>%
 
 ## Conclusion
 
-Throughout this workshop, we've explored various aspects of British Columbia's educational landscape using spatial analysis techniques in R. We've seen how to load and manipulate spatial data, create informative visualizations, and perform analyses that can inform real-world decision-making in education and urban planning.
+Throughout this workshop, we've explored various aspects of British
+Columbia's educational landscape using spatial analysis techniques in R.
+We've seen how to load and manipulate spatial data, create informative
+visualizations, and perform analyses that can inform real-world
+decision-making in education and urban planning.
 
-Key SF functions we've used include:
-- `st_read()` for reading spatial data
-- `st_transform()` for ensuring consistent coordinate reference systems
-- `st_join()` for spatial joins
-- `st_buffer()` for creating buffer zones
-- `st_union()` for combining geometries
-- `st_intersection()` for finding overlaps between geometries
-- `st_area()` for calculating areas
-- `st_voronoi()` for creating Voronoi polygons
+Key SF functions we've used include: 
+- `st_read()` for reading spatial
+data 
+- `st_transform()` for ensuring consistent coordinate reference
+systems 
+- `st_join()` for spatial joins 
+- `st_buffer()` for creating buffer zones 
+- `st_union()` for combining geometries 
+- `st_intersection()` for finding overlaps between geometries 
+- `st_area()` for calculating areas 
+- `st_voronoi()` for creating Voronoi polygons 
 - `st_distance()` for calculating distances between geometries
 
-Remember, this is just the beginning of what's possible with spatial analysis in R. As you continue to explore and analyze spatial data, you'll discover even more powerful techniques and insights that can help inform policy, improve resource allocation, and enhance educational equity across British Columbia and beyond.
+Remember, this is just the beginning of what's possible with spatial
+analysis in R. As you continue to explore and analyze spatial data,
+you'll discover even more powerful techniques and insights that can help
+inform policy, improve resource allocation, and enhance educational
+equity across British Columbia and beyond.
